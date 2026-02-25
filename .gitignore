@@ -1,0 +1,9 @@
+# Generated data — not committed, fetched fresh on open
+conditions.json
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc

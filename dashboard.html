@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FlatsCheck — TX Gulf Coast</title>
+<style>
+  :root {
+    --bg:       #0d0f11;
+    --bg-card:  #141618;
+    --bg-float: #1c1f22;
+    --border:   #2a2d30;
+    --text:     #e8e6e0;
+    --muted:    #6b7280;
+    --gold:     #d4a843;
+    --go-bg:    #0d2818;
+    --go-text:  #4ade80;
+    --go-border:#22c55e;
+    --maybe-bg: #2a1f00;
+    --maybe-text:#fbbf24;
+    --maybe-border:#f59e0b;
+    --no-bg:    #2a0d0d;
+    --no-text:  #f87171;
+    --no-border:#ef4444;
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    min-height: 100vh;
+    padding: 24px 16px 60px;
+  }
+
+  /* ── Header ──────────────────────────────────────── */
+  .header {
+    max-width: 960px;
+    margin: 0 auto 32px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 20px;
+  }
+  .header-left h1 {
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    line-height: 1.1;
+  }
+  .header-left h1 span { color: var(--gold); }
+  .header-left .sub {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+  .header-right {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-align: right;
+    line-height: 1.8;
+  }
+  .header-right .data-source { color: var(--gold); }
+
+  /* ── Legend ──────────────────────────────────────── */
+  .legend {
+    max-width: 960px;
+    margin: 0 auto 24px;
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    font-family: var(--font-mono);
+    letter-spacing: 0.04em;
+  }
+  .legend-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .dot-go    { background: var(--go-border); }
+  .dot-maybe { background: var(--maybe-border); }
+  .dot-no    { background: var(--no-border); }
+
+  /* ── 7-Day Grid ──────────────────────────────────── */
+  .grid {
+    max-width: 960px;
+    margin: 0 auto 40px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+  }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+  .card.go    { border-top: 3px solid var(--go-border); }
+  .card.maybe { border-top: 3px solid var(--maybe-border); }
+  .card.no    { border-top: 3px solid var(--no-border); }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px 10px;
+  }
+  .card-date {
+    display: flex;
+    flex-direction: column;
+  }
+  .card-day {
+    font-size: 0.7rem;
+    font-family: var(--font-mono);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .card-date-str {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+  .score-block {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+  .score-num {
+    font-size: 2.4rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+  .score-denom {
+    font-size: 0.65rem;
+    font-family: var(--font-mono);
+    color: var(--muted);
+    letter-spacing: 0.06em;
+  }
+  .card.go    .score-num { color: var(--go-text); }
+  .card.maybe .score-num { color: var(--maybe-text); }
+  .card.no    .score-num { color: var(--no-text); }
+
+  .verdict-badge {
+    margin: 0 16px 10px;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-align: center;
+  }
+  .card.go    .verdict-badge { background: var(--go-bg);    color: var(--go-text);    border: 1px solid var(--go-border); }
+  .card.maybe .verdict-badge { background: var(--maybe-bg); color: var(--maybe-text); border: 1px solid var(--maybe-border); }
+  .card.no    .verdict-badge { background: var(--no-bg);    color: var(--no-text);    border: 1px solid var(--no-border); }
+
+  .verdict-text {
+    padding: 0 16px 12px;
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  .card-divider { height: 1px; background: var(--border); margin: 0 16px; }
+
+  .card-stats {
+    padding: 12px 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .stat { display: flex; flex-direction: column; gap: 1px; }
+  .stat-label {
+    font-size: 0.62rem;
+    font-family: var(--font-mono);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .stat-value {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .stat-note {
+    font-size: 0.68rem;
+    color: var(--muted);
+  }
+
+  .card-breakdown {
+    padding: 0 16px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .breakdown-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+  }
+  .breakdown-label {
+    font-family: var(--font-mono);
+    color: var(--muted);
+    width: 72px;
+    flex-shrink: 0;
+  }
+  .pip-row { display: flex; gap: 2px; }
+  .pip {
+    width: 8px; height: 8px;
+    border-radius: 2px;
+    background: var(--border);
+  }
+  .pip.filled { background: var(--gold); }
+  .breakdown-note { color: var(--muted); flex: 1; }
+
+  /* ── Locations ───────────────────────────────────── */
+  .section {
+    max-width: 960px;
+    margin: 0 auto 32px;
+  }
+  .section-title {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 14px;
+  }
+  .locations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+  }
+  .location-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+  }
+  .location-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .location-notes {
+    font-size: 0.76rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* ── Species badge ───────────────────────────────── */
+  .species-row {
+    max-width: 960px;
+    margin: 0 auto 28px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .species-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    background: var(--bg-float);
+    border: 1px solid var(--border);
+    font-size: 0.76rem;
+    font-family: var(--font-mono);
+    letter-spacing: 0.04em;
+    color: var(--gold);
+  }
+
+  /* ── Scoring key ─────────────────────────────────── */
+  .scoring-key {
+    max-width: 960px;
+    margin: 0 auto 32px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+  }
+  .scoring-key h3 {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 10px;
+  }
+  .key-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 6px;
+    font-size: 0.76rem;
+  }
+  .key-item { display: flex; gap: 8px; align-items: baseline; }
+  .key-range { font-family: var(--font-mono); color: var(--gold); width: 36px; }
+  .key-desc { color: var(--muted); }
+
+  /* ── Footer ──────────────────────────────────────── */
+  .footer {
+    max-width: 960px;
+    margin: 0 auto;
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    text-align: center;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── Loading / Error ─────────────────────────────── */
+  .loading, .error {
+    max-width: 960px;
+    margin: 80px auto;
+    text-align: center;
+    font-family: var(--font-mono);
+    color: var(--muted);
+  }
+  .error { color: var(--no-text); }
+  .loading-spinner {
+    width: 32px; height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 600px) {
+    .grid { grid-template-columns: 1fr; }
+    .locations-grid { grid-template-columns: 1fr; }
+    .card-stats { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div class="loading">
+    <div class="loading-spinner"></div>
+    Fetching conditions...
+  </div>
+</div>
+
+<script>
+// ── Config ────────────────────────────────────────────────────────────────────
+const NOAA_STATION = "8775241"; // Port Aransas, TX
+const LAT  = 27.8336;
+const LON  = -97.0641;
+const TIMEZONE = "America/Chicago";
+
+const LOCATIONS = [
+  {
+    name: "Laguna Madre",
+    notes: "Shallow hypersaline lagoon — prime redfish habitat. Ultra-clear water means wind matters enormously. Best on calm mornings on the flats. Watch for tailing reds.",
+  },
+  {
+    name: "Port Aransas / Aransas Pass",
+    notes: "Jetties + grass flats. Great trout habitat in the back bays. Tidal current through the pass creates feeding lanes. Best on moving tides. NOAA data from this station.",
+  },
+  {
+    name: "Rockport / Aransas Bay",
+    notes: "Classic Texas flats — grass beds, shell pads, shallow bays. Excellent for wading. Speckled trout love the grass edges. Redfish stack in potholes at low tide.",
+  },
+  {
+    name: "Baffin Bay",
+    notes: "Remote and wild — legendary big trout country. Rocky shorelines and clear water. Sensitive to cold fronts; trout go deep below 55°F. Best in fall and spring.",
+  },
+];
+
+// ── Date Helpers ──────────────────────────────────────────────────────────────
+function pad(n) { return String(n).padStart(2, "0"); }
+
+function toDateStr(date) {
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+function toNOAADate(date) {
+  return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}`;
+}
+
+function addDays(date, n) {
+  const d = new Date(date);
+  d.setDate(d.getDate() + n);
+  return d;
+}
+
+// ── API Fetchers ──────────────────────────────────────────────────────────────
+async function fetchNOAATides() {
+  const url =
+    `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter` +
+    `?begin_date=${toNOAADate(new Date())}&range=168&station=${NOAA_STATION}` +
+    `&product=predictions&datum=MLLW&time_zone=lst_ldt` +
+    `&interval=h&units=english&application=flatscheck&format=json`;
+  const resp = await fetch(url);
+  const data = await resp.json();
+  if (!data.predictions) throw new Error("No predictions in NOAA response");
+  return { data: data.predictions, source: "NOAA" };
+}
+
+async function fetchWeather() {
+  const url =
+    `https://api.open-meteo.com/v1/forecast` +
+    `?latitude=${LAT}&longitude=${LON}` +
+    `&daily=wind_speed_10m_max,wind_direction_10m_dominant,` +
+    `temperature_2m_max,precipitation_sum,sunrise,sunset` +
+    `&temperature_unit=fahrenheit&wind_speed_unit=mph` +
+    `&precipitation_unit=inch&timezone=${encodeURIComponent(TIMEZONE)}&forecast_days=7`;
+  const resp = await fetch(url);
+  const data = await resp.json();
+  if (!data.daily) throw new Error("No daily data in Open-Meteo response");
+  return { data: data.daily, source: "Open-Meteo" };
+}
+
+// ── Sample Fallbacks ──────────────────────────────────────────────────────────
+function sampleWeather() {
+  const today = new Date();
+  const days = Array.from({ length: 7 }, (_, i) => toDateStr(addDays(today, i)));
+  return {
+    data: {
+      time: days,
+      wind_speed_10m_max:          [8, 14, 22, 10, 6, 18, 12],
+      wind_direction_10m_dominant:  [120, 145, 170, 110, 95, 160, 135],
+      temperature_2m_max:           [72, 68, 65, 75, 78, 63, 70],
+      precipitation_sum:            [0, 0, 0.1, 0, 0, 0.2, 0],
+      sunrise: days.map(d => `${d}T07:12`),
+      sunset:  days.map(d => `${d}T18:45`),
+    },
+    source: "sample",
+  };
+}
+
+function sampleTides() {
+  const base = new Date();
+  base.setMinutes(0); base.setSeconds(0); base.setMilliseconds(0);
+  const predictions = [];
+  for (let h = 0; h < 168; h++) {
+    const t = new Date(base.getTime() + h * 3_600_000);
+    const v = (
+      1.2 * Math.sin(2 * Math.PI * h / 12.4 + 0.5) +
+      0.4 * Math.sin(2 * Math.PI * h / 24.8 + 1.0)
+    );
+    const tStr = `${t.getFullYear()}-${pad(t.getMonth()+1)}-${pad(t.getDate())} ${pad(t.getHours())}:${pad(t.getMinutes())}`;
+    predictions.push({ t: tStr, v: v.toFixed(3) });
+  }
+  return { data: predictions, source: "sample" };
+}
+
+// ── Tide Analysis ─────────────────────────────────────────────────────────────
+function analyzeTidesForDay(predictions, dStr) {
+  const dayData = predictions.filter(p => p.t.startsWith(dStr));
+  if (!dayData.length) {
+    return { highs: [], lows: [], tidal_range: 0, moving_water_pts: 1, low_tide_timing_pts: 1, best_low_time: "N/A" };
+  }
+
+  const values = dayData.map(p => parseFloat(p.v));
+  const times  = dayData.map(p => p.t);
+
+  const highs = [], lows = [];
+  for (let i = 1; i < values.length - 1; i++) {
+    if (values[i] > values[i-1] && values[i] > values[i+1]) {
+      highs.push({ time: times[i], height: Math.round(values[i] * 100) / 100 });
+    } else if (values[i] < values[i-1] && values[i] < values[i+1]) {
+      lows.push({ time: times[i], height: Math.round(values[i] * 100) / 100 });
+    }
+  }
+
+  const tidalRange = values.length ? Math.max(...values) - Math.min(...values) : 0;
+
+  let movingWaterPts;
+  if (tidalRange >= 1.2)     movingWaterPts = 2;
+  else if (tidalRange >= 0.5) movingWaterPts = 1;
+  else                        movingWaterPts = 0;
+
+  let bestLowTime = "N/A", lowTimingPts = 0;
+  for (const low of lows) {
+    const hour = parseInt(low.time.split(" ")[1].split(":")[0], 10);
+    if (hour >= 6 && hour <= 10) {
+      lowTimingPts = 2;
+      bestLowTime  = low.time.split(" ")[1];
+      break;
+    } else if ((hour > 10 && hour <= 13) || (hour >= 4 && hour < 6)) {
+      lowTimingPts = 1;
+      if (bestLowTime === "N/A") bestLowTime = low.time.split(" ")[1];
+    }
+  }
+  if (bestLowTime === "N/A" && lows.length) bestLowTime = lows[0].time.split(" ")[1];
+
+  return {
+    highs, lows,
+    tidal_range:         Math.round(tidalRange * 100) / 100,
+    moving_water_pts:    movingWaterPts,
+    low_tide_timing_pts: lowTimingPts,
+    best_low_time:       bestLowTime,
+  };
+}
+
+// ── Solunar ───────────────────────────────────────────────────────────────────
+function moonPhase(date) {
+  // Reference: Jan 6, 2000 18:14 UTC (confirmed new moon)
+  // Synodic period: 29.530588853 days
+  const epoch   = new Date(Date.UTC(2000, 0, 6, 18, 14, 0));
+  const synodic = 29.530588853;
+  const diff    = (date - epoch) / 86_400_000;
+  let phaseDays = ((diff % synodic) + synodic) % synodic;
+
+  let name, emoji;
+  if      (phaseDays < 1.85)  { name = "New Moon";        emoji = "🌑"; }
+  else if (phaseDays < 7.38)  { name = "Waxing Crescent"; emoji = "🌒"; }
+  else if (phaseDays < 11.08) { name = "First Quarter";   emoji = "🌓"; }
+  else if (phaseDays < 14.77) { name = "Waxing Gibbous";  emoji = "🌔"; }
+  else if (phaseDays < 16.61) { name = "Full Moon";        emoji = "🌕"; }
+  else if (phaseDays < 22.15) { name = "Waning Gibbous";  emoji = "🌖"; }
+  else if (phaseDays < 25.84) { name = "Last Quarter";    emoji = "🌗"; }
+  else                         { name = "Waning Crescent"; emoji = "🌘"; }
+
+  return { phaseDays, name, emoji };
+}
+
+function scoreSolunar(phaseDays) {
+  if (phaseDays <= 2.0 || phaseDays >= 27.5)
+    return { pts: 2, note: "New moon — peak solunar, maximum feeding activity" };
+  if (phaseDays >= 12.75 && phaseDays <= 16.75)
+    return { pts: 2, note: "Full moon — peak solunar, maximum feeding activity" };
+  if (phaseDays >= 5.5 && phaseDays <= 9.0)
+    return { pts: 1, note: "First quarter — moderate solunar activity" };
+  if (phaseDays >= 20.5 && phaseDays <= 24.0)
+    return { pts: 1, note: "Last quarter — moderate solunar activity" };
+  return { pts: 0, note: "Crescent phase — weak solunar period" };
+}
+
+// ── Wind ──────────────────────────────────────────────────────────────────────
+function windDirLabel(deg) {
+  const dirs = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
+  return dirs[Math.round(deg / 22.5) % 16];
+}
+
+function windArrow(deg) {
+  return ["↑","↗","→","↘","↓","↙","←","↖"][Math.round(deg / 45) % 8];
+}
+
+// ── Scoring Engine ────────────────────────────────────────────────────────────
+function scoreDay(windMph, tideData, tempF, rainIn, date) {
+  const bd = {};
+
+  // Wind (0–3 pts)
+  let windPts, windNote;
+  if      (windMph < 10) { windPts = 3; windNote = "Calm — perfect sight-fishing"; }
+  else if (windMph < 15) { windPts = 2; windNote = "Light — good casting lanes"; }
+  else if (windMph < 20) { windPts = 1; windNote = "Moderate — manageable"; }
+  else                   { windPts = 0; windNote = "Too windy — water choppy, visibility poor"; }
+  bd.wind = { pts: windPts, note: windNote };
+
+  // Tidal movement (0–2 pts)
+  const movingPts = tideData.moving_water_pts;
+  bd.tides = {
+    pts: movingPts,
+    note: movingPts === 2 ? "Good tidal movement — baitfish pushed, fish active"
+        : movingPts === 1 ? "Moderate movement"
+        :                   "Dead water — fish sluggish",
+  };
+
+  // Low tide timing (0–2 pts)
+  const lowPts  = tideData.low_tide_timing_pts;
+  const bestLow = tideData.best_low_time;
+  bd.low_tide_timing = {
+    pts:  lowPts,
+    note: lowPts === 2 ? `Low tide at ${bestLow} — prime morning flat access`
+        : lowPts === 1 ? `Low tide at ${bestLow} — decent timing`
+        :                `Low tide at ${bestLow} — off-peak timing`,
+  };
+
+  // Temperature (0–2 pts)
+  let tempPts, tempNote;
+  if      (tempF >= 65 && tempF <= 85)                            { tempPts = 2; tempNote = "Ideal — both species active"; }
+  else if ((tempF >= 55 && tempF < 65) || (tempF > 85 && tempF <= 92)) { tempPts = 1; tempNote = "Acceptable — fish may be slower"; }
+  else if (tempF < 55)                                            { tempPts = 0; tempNote = "Cold — trout lethargic, fish deep structure"; }
+  else                                                            { tempPts = 0; tempNote = "Too hot — fish in deeper, cooler water"; }
+  bd.temperature = { pts: tempPts, note: tempNote };
+
+  // Rain (0–1 pt)
+  let rainPts, rainNote;
+  if      (rainIn === 0)      { rainPts = 1; rainNote = "No rain — clear skies"; }
+  else if (rainIn < 0.1)      { rainPts = 1; rainNote = "Trace rain — minimal impact"; }
+  else                        { rainPts = 0; rainNote = "Rain — reduced visibility, harder wade"; }
+  bd.rain = { pts: rainPts, note: rainNote };
+
+  // Solunar (0–2 pts)
+  const phase   = moonPhase(date);
+  const solunar = scoreSolunar(phase.phaseDays);
+  bd.solunar = {
+    pts:       solunar.pts,
+    note:      solunar.note,
+    phase:     phase.name,
+    emoji:     phase.emoji,
+    phase_days: Math.round(phase.phaseDays * 10) / 10,
+  };
+
+  const total = windPts + movingPts + lowPts + tempPts + rainPts + solunar.pts;
+
+  let label, verdict;
+  if      (total >= 9) { label = "GO";    verdict = "Prime day — get on the water"; }
+  else if (total >= 5) { label = "MAYBE"; verdict = "Fishable — pick your spots carefully"; }
+  else                 { label = "NO";    verdict = "Skip it — conditions are against you"; }
+
+  return { score: total, label, verdict, breakdown: bd };
+}
+
+// ── Card Builder ──────────────────────────────────────────────────────────────
+function cls(label) {
+  return { GO: "go", MAYBE: "maybe", NO: "no" }[label] || "no";
+}
+
+function pips(pts, max) {
+  let html = '<div class="pip-row">';
+  for (let i = 0; i < max; i++) html += `<div class="pip${i < pts ? " filled" : ""}"></div>`;
+  return html + "</div>";
+}
+
+function formatDate(str) {
+  return new Date(str + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function sourceBadge(sources) {
+  const t = sources.tides   === "sample" ? "⚠ sample tides"   : "✓ NOAA tides";
+  const w = sources.weather === "sample" ? "⚠ sample weather" : "✓ Open-Meteo";
+  return `<span class="data-source">${t}</span> · <span class="data-source">${w}</span>`;
+}
+
+function buildCard(day) {
+  const c  = cls(day.label);
+  const bd = day.breakdown;
+  return `
+<div class="card ${c}">
+  <div class="card-header">
+    <div class="card-date">
+      <div class="card-day">${day.day}</div>
+      <div class="card-date-str">${formatDate(day.date)}</div>
+    </div>
+    <div class="score-block">
+      <div class="score-num">${day.score}</div>
+      <div class="score-denom">/ 12</div>
+    </div>
+  </div>
+
+  <div class="verdict-badge">${day.label}</div>
+  <div class="verdict-text">${day.verdict}</div>
+
+  <div class="card-divider"></div>
+
+  <div class="card-stats">
+    <div class="stat">
+      <div class="stat-label">Wind</div>
+      <div class="stat-value">${windArrow(day.wind.direction_deg)} ${day.wind.speed_mph} mph</div>
+      <div class="stat-note">${day.wind.direction_label}</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Temp</div>
+      <div class="stat-value">${day.temperature_f}°F</div>
+      <div class="stat-note">Rain: ${day.rain_in}"</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Low Tide</div>
+      <div class="stat-value">${day.tides.best_low_time}</div>
+      <div class="stat-note">Range: ${day.tides.tidal_range_ft}ft</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Sun</div>
+      <div class="stat-value">${day.sunrise}</div>
+      <div class="stat-note">Sets ${day.sunset}</div>
+    </div>
+  </div>
+
+  <div class="card-divider"></div>
+
+  <div class="card-breakdown">
+    <div class="breakdown-row">
+      <span class="breakdown-label">Wind</span>
+      ${pips(bd.wind.pts, 3)}
+      <span class="breakdown-note">${bd.wind.note}</span>
+    </div>
+    <div class="breakdown-row">
+      <span class="breakdown-label">Tides</span>
+      ${pips(bd.tides.pts, 2)}
+      <span class="breakdown-note">${bd.tides.note}</span>
+    </div>
+    <div class="breakdown-row">
+      <span class="breakdown-label">Low Time</span>
+      ${pips(bd.low_tide_timing.pts, 2)}
+      <span class="breakdown-note">${bd.low_tide_timing.note}</span>
+    </div>
+    <div class="breakdown-row">
+      <span class="breakdown-label">Temp</span>
+      ${pips(bd.temperature.pts, 2)}
+      <span class="breakdown-note">${bd.temperature.note}</span>
+    </div>
+    <div class="breakdown-row">
+      <span class="breakdown-label">Rain</span>
+      ${pips(bd.rain.pts, 1)}
+      <span class="breakdown-note">${bd.rain.note}</span>
+    </div>
+    <div class="breakdown-row">
+      <span class="breakdown-label">Solunar</span>
+      ${pips(bd.solunar.pts, 2)}
+      <span class="breakdown-note">${bd.solunar.emoji} ${bd.solunar.note}</span>
+    </div>
+  </div>
+</div>`;
+}
+
+// ── Page Builder ──────────────────────────────────────────────────────────────
+function buildPage(data) {
+  const bestDay = data.days.reduce((a, b) => a.score >= b.score ? a : b);
+  const cards   = data.days.map(buildCard).join("");
+  const locs    = LOCATIONS.map(loc => `
+<div class="location-card">
+  <div class="location-name">${loc.name}</div>
+  <div class="location-notes">${loc.notes}</div>
+</div>`).join("");
+  const species = data.target_species.map(s => `<span class="species-badge">🎣 ${s}</span>`).join("");
+
+  return `
+<div class="header">
+  <div class="header-left">
+    <h1>Flats<span>Check</span></h1>
+    <div class="sub">TX Gulf Coast · 7-Day Conditions · Port Aransas, TX</div>
+  </div>
+  <div class="header-right">
+    Updated: ${data.generated_at}<br>
+    ${sourceBadge(data.sources)}<br>
+    Best: <span style="color:var(--go-text)">${bestDay.day} (${formatDate(bestDay.date)}) — ${bestDay.score}/12</span>
+  </div>
+</div>
+
+<div class="species-row">${species}</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot dot-go"></div>GO (9–12)</div>
+  <div class="legend-item"><div class="legend-dot dot-maybe"></div>MAYBE (5–8)</div>
+  <div class="legend-item"><div class="legend-dot dot-no"></div>NO (0–4)</div>
+</div>
+
+<div class="grid">${cards}</div>
+
+<div class="section">
+  <div class="section-title">Fishing Spots</div>
+  <div class="locations-grid">${locs}</div>
+</div>
+
+<div class="scoring-key">
+  <h3>Scoring Breakdown (12 pts max)</h3>
+  <div class="key-grid">
+    <div class="key-item"><span class="key-range">Wind</span><span class="key-desc">&lt;10mph=3, 10–15=2, 15–20=1, &gt;20=0</span></div>
+    <div class="key-item"><span class="key-range">Tides</span><span class="key-desc">Moving water=2, moderate=1, dead=0</span></div>
+    <div class="key-item"><span class="key-range">Low⏱</span><span class="key-desc">6–10am low tide=2, near=1, other=0</span></div>
+    <div class="key-item"><span class="key-range">Temp</span><span class="key-desc">65–85°F=2, 55–92°F=1, extreme=0</span></div>
+    <div class="key-item"><span class="key-range">Rain</span><span class="key-desc">Dry=1, rain=0</span></div>
+    <div class="key-item"><span class="key-range">🌕 Sol</span><span class="key-desc">New/Full moon=2, Quarter=1, Crescent=0</span></div>
+  </div>
+</div>
+
+<div class="footer">
+  FLATSCHECK · NOAA STATION ${NOAA_STATION} · ${LAT}°N ${Math.abs(LON)}°W · DATA REFRESHED ON OPEN
+</div>`;
+}
+
+// ── Main ──────────────────────────────────────────────────────────────────────
+async function init() {
+  const app = document.getElementById("app");
+
+  try {
+    // Fetch both APIs in parallel; fall back to sample data on failure
+    const [tidesResult, weatherResult] = await Promise.allSettled([
+      fetchNOAATides(),
+      fetchWeather(),
+    ]);
+
+    const tides   = tidesResult.status   === "fulfilled" ? tidesResult.value   : sampleTides();
+    const weather = weatherResult.status === "fulfilled" ? weatherResult.value : sampleWeather();
+
+    const today = new Date();
+    const days  = [];
+
+    for (let i = 0; i < 7; i++) {
+      const dateObj = addDays(today, i);
+      const dStr    = toDateStr(dateObj);
+      const dayName = dateObj.toLocaleDateString("en-US", { weekday: "long" });
+
+      const wi = weather.data.time.indexOf(dStr);
+      const ix = wi >= 0 ? wi : i;
+
+      const windMph = weather.data.wind_speed_10m_max[ix];
+      const windDeg = weather.data.wind_direction_10m_dominant[ix];
+      const tempF   = weather.data.temperature_2m_max[ix];
+      const rainIn  = weather.data.precipitation_sum[ix];
+      const sunriseRaw = weather.data.sunrise[ix] || "";
+      const sunsetRaw  = weather.data.sunset[ix]  || "";
+      const sunrise = sunriseRaw.includes("T") ? sunriseRaw.split("T")[1] : sunriseRaw;
+      const sunset  = sunsetRaw.includes("T")  ? sunsetRaw.split("T")[1]  : sunsetRaw;
+
+      const tideData = analyzeTidesForDay(tides.data, dStr);
+      const result   = scoreDay(windMph, tideData, tempF, rainIn, dateObj);
+
+      days.push({
+        date:         dStr,
+        day:          dayName,
+        score:        result.score,
+        label:        result.label,
+        verdict:      result.verdict,
+        breakdown:    result.breakdown,
+        wind: {
+          speed_mph:     Math.round(windMph * 10) / 10,
+          direction_deg: windDeg,
+          direction_label: windDirLabel(windDeg),
+        },
+        tides: {
+          highs:         tideData.highs,
+          lows:          tideData.lows,
+          tidal_range_ft: tideData.tidal_range,
+          best_low_time: tideData.best_low_time,
+        },
+        temperature_f: Math.round(tempF   * 10) / 10,
+        rain_in:       Math.round(rainIn  * 100) / 100,
+        sunrise,
+        sunset,
+      });
+    }
+
+    const now = new Date();
+    const data = {
+      generated_at: now.toLocaleString("en-US", {
+        month: "short", day: "numeric", year: "numeric",
+        hour: "2-digit", minute: "2-digit",
+      }),
+      sources: {
+        tides:   tides.source,
+        weather: weather.source,
+      },
+      target_species: ["Redfish (red drum)", "Speckled Trout (spotted seatrout)"],
+      days,
+    };
+
+    app.innerHTML = buildPage(data);
+
+  } catch (err) {
+    app.innerHTML = `
+<div class="error">
+  <div style="font-size:2rem;margin-bottom:16px">🎣</div>
+  <div style="font-size:1rem;color:var(--text);margin-bottom:8px">Failed to load conditions</div>
+  <div style="font-size:0.8rem">${err.message}</div>
+  <div style="margin-top:16px;font-size:0.72rem">Check your internet connection and reload.</div>
+</div>`;
+  }
+}
+
+init();
+</script>
+</body>
+</html>
