@@ -160,35 +160,27 @@ def moon_phase(date_obj):
 
 def score_solunar(phase_days):
     """
-    Score solunar activity based on moon phase (0–2 pts).
+    Score solunar activity for DAYTIME flats fishing (0–2 pts).
 
-    New moon and full moon produce the strongest combined gravitational
-    pull from the sun and moon, creating peak solunar periods where fish
-    feed most aggressively. Quarter moons produce moderate activity.
-    Crescent phases produce weaker solunar influence.
+    Key insight: full moon = bright nights = fish feed all night on lit water
+    → arrive at dawn already full → slow daytime bite.
+    New moon = dark nights = fish couldn't feed overnight → hungry at first light
+    → aggressive daytime bite on the flats.
 
     Windows:
-      New moon  (days 0–2.0 or 27.5–29.5): 2 pts
-      Full moon (days 12.75–16.75):         2 pts
-      First quarter (days 5.5–9.0):         1 pt
-      Last quarter  (days 20.5–24.0):       1 pt
-      Other (crescent phases):               0 pts
+      New moon  (days 0–4 or 26.5–29.5):  2 pts  — dark nights, hungry fish at dawn
+      Crescent + Quarter (days 4–11 or 19–26.5): 1 pt — partial nights, moderate bite
+      Gibbous + Full (days 11–19):         0 pts  — bright moon nights, fish fed overnight
     """
-    # New moon window
-    if phase_days <= 2.0 or phase_days >= 27.5:
-        return 2, "New moon — peak solunar, maximum feeding activity"
-    # Full moon window
-    elif 12.75 <= phase_days <= 16.75:
-        return 2, "Full moon — peak solunar, maximum feeding activity"
-    # First quarter
-    elif 5.5 <= phase_days <= 9.0:
-        return 1, "First quarter — moderate solunar activity"
-    # Last quarter
-    elif 20.5 <= phase_days <= 24.0:
-        return 1, "Last quarter — moderate solunar activity"
-    # Crescent phases
+    # New moon window (dark nights — best for daytime fishing)
+    if phase_days <= 4.0 or phase_days >= 26.5:
+        return 2, "New moon — dark nights, fish arrive hungry at daybreak"
+    # Gibbous and full moon (bright nights — fish fed overnight, slow daytime bite)
+    elif 11.0 <= phase_days <= 19.0:
+        return 0, "Bright moon — fish fed overnight, expect slow morning bite"
+    # Crescent and quarter phases (in between)
     else:
-        return 0, "Crescent phase — weak solunar period"
+        return 1, "Quarter/crescent — partial moon nights, moderate daytime bite"
 
 
 # ── Tide Analysis ────────────────────────────────────────────────────────────

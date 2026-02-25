@@ -548,15 +548,13 @@ function moonPhase(date) {
 }
 
 function scoreSolunar(phaseDays) {
-  if (phaseDays <= 2.0 || phaseDays >= 27.5)
-    return { pts: 2, note: "New moon — peak solunar, maximum feeding activity" };
-  if (phaseDays >= 12.75 && phaseDays <= 16.75)
-    return { pts: 2, note: "Full moon — peak solunar, maximum feeding activity" };
-  if (phaseDays >= 5.5 && phaseDays <= 9.0)
-    return { pts: 1, note: "First quarter — moderate solunar activity" };
-  if (phaseDays >= 20.5 && phaseDays <= 24.0)
-    return { pts: 1, note: "Last quarter — moderate solunar activity" };
-  return { pts: 0, note: "Crescent phase — weak solunar period" };
+  // Full moon = bright nights = fish feed all night = slow daytime bite
+  // New moon = dark nights = fish couldn't feed overnight = hungry at first light
+  if (phaseDays <= 4.0 || phaseDays >= 26.5)
+    return { pts: 2, note: "New moon — dark nights, fish arrive hungry at daybreak" };
+  if (phaseDays >= 11.0 && phaseDays <= 19.0)
+    return { pts: 0, note: "Bright moon — fish fed overnight, expect slow morning bite" };
+  return { pts: 1, note: "Quarter/crescent — partial moon nights, moderate daytime bite" };
 }
 
 // ── Wind ──────────────────────────────────────────────────────────────────────
@@ -785,7 +783,7 @@ function buildPage(data) {
     <div class="key-item"><span class="key-range">Low⏱</span><span class="key-desc">6–10am low tide=2, near=1, other=0</span></div>
     <div class="key-item"><span class="key-range">Temp</span><span class="key-desc">65–85°F=2, 55–92°F=1, extreme=0</span></div>
     <div class="key-item"><span class="key-range">Rain</span><span class="key-desc">Dry=1, rain=0</span></div>
-    <div class="key-item"><span class="key-range">🌕 Sol</span><span class="key-desc">New/Full moon=2, Quarter=1, Crescent=0</span></div>
+    <div class="key-item"><span class="key-range">🌑 Sol</span><span class="key-desc">New moon=2, Quarter/crescent=1, Gibbous/Full=0</span></div>
   </div>
 </div>
 
